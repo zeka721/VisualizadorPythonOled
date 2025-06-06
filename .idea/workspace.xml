@@ -5,18 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7190eb86-05ae-4871-b597-60e5aa03ef27" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/cargar_dibujo.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/comandos.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/configuracion.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dibujo.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/editar.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/herramientas.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mover.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/recursos.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visualizador.py" beforeDir="false" afterPath="$PROJECT_DIR$/Visualizador.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visualizador_online.py" beforeDir="false" afterPath="$PROJECT_DIR$/archivo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/u8g2_output.txt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,37 +22,37 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "zeka721"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;zeka721&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/zeka721/VisualizadorPythonOled.git",
-    "accountId": "17c6b32f-6853-496e-acb9-eb7ce2675625"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/zeka721/VisualizadorPythonOled.git&quot;,
+    &quot;accountId&quot;: &quot;17c6b32f-6853-496e-acb9-eb7ce2675625&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="2y1uXyfj1KoYNoOWpGwkHkTBH9J" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.Visualizador (1).executor": "Run",
-    "Python.Visualizador_online.executor": "Run",
-    "Python.main (1).executor": "Run",
-    "Python.main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.Visualizador (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.Visualizador_online.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Python.Visualizador (1)">
     <configuration name="Visualizador (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="SimuladorArduino" />
