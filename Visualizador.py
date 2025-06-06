@@ -1,197 +1,55 @@
+# Visualizador.py
+
 import pygame
+from configuracion import *
+from dibujo import draw_toolbar, draw_shape
+from comandos import get_commands, clear_commands
+from archivo import guardar_comandos, cargar_comandos
+from herramientas import detectar_herramienta
+from mover import seleccionar_figura, mover_figura
+from editar import detectar_vertice_cercano, mover_vertice
+
+def dentro_area_oled(x, y):
+    return TOOLBAR_WIDTH <= x < WINDOW_WIDTH and 0 <= y < WINDOW_HEIGHT
 
 pygame.init()
-
-SCALE = 6
-OLED_WIDTH = 128
-OLED_HEIGHT = 64
-DISPLAY_WIDTH = OLED_WIDTH * SCALE
-DISPLAY_HEIGHT = OLED_HEIGHT * SCALE
-TOOLBAR_WIDTH = 130
-WINDOW_WIDTH = DISPLAY_WIDTH + TOOLBAR_WIDTH
-WINDOW_HEIGHT = DISPLAY_HEIGHT
-
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRAY = (50, 50, 50)
-BLUE = (0, 0, 255)
-
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Simulador OLED u8g2")
 font = pygame.font.SysFont(None, 20)
 
-tools = [
-    "Pixel", "Línea", "Rect", "Rect llena", "Círculo", "Círculo lleno",
-    "Elipse", "Elipse llena", "Triángulo", "Triángulo lleno",
-    "Caja red", "Marco red", "Borrar", "Guardar"
-]
+# Estado de la aplicación
 selected_tool = "Pixel"
-u8g2_commands = []
-drawn_shapes = []
-
 drawing = False
 start_pos = (0, 0)
 end_pos = (0, 0)
+drawn_shapes = []
+undo_stack = []
+redo_stack = []
 
-def draw_toolbar():
-    pygame.draw.rect(screen, GRAY, (0, 0, TOOLBAR_WIDTH, WINDOW_HEIGHT))
-    for i, tool in enumerate(tools):
-        color = BLUE if tool == selected_tool else WHITE
-        text = font.render(tool, True, color)
-        screen.blit(text, (5, 10 + i * 25))
-
-def add_command(cmd):
-    if cmd not in u8g2_commands:
-        u8g2_commands.append(cmd)
-
-def draw_shape(tool, start, end, preview=False, save=True):
-    sx, sy = start
-    ex, ey = end
-
-    sx_oled = (sx - TOOLBAR_WIDTH) // SCALE
-    sy_oled = sy // SCALE
-    ex_oled = (ex - TOOLBAR_WIDTH) // SCALE
-    ey_oled = ey // SCALE
-
-    w = abs(ex - sx)
-    h = abs(ey - sy)
-    w_oled = w // SCALE
-    h_oled = h // SCALE
-
-    x0, y0 = min(sx, ex), min(sy, ey)
-    x0_oled = (x0 - TOOLBAR_WIDTH) // SCALE
-    y0_oled = y0 // SCALE
-
-    if tool == "Pixel":
-        if TOOLBAR_WIDTH <= sx < WINDOW_WIDTH and 0 <= sy < WINDOW_HEIGHT:
-            pygame.draw.rect(screen, WHITE, (sx, sy, SCALE, SCALE))
-            if not preview:
-                add_command(f"u8g2.drawPixel({sx_oled}, {sy_oled});")
-                if save:
-                    drawn_shapes.append((tool, start, end))
-
-    elif tool == "Línea":
-        pygame.draw.line(screen, WHITE, start, end)
-        if not preview:
-            add_command(f"u8g2.drawLine({sx_oled}, {sy_oled}, {ex_oled}, {ey_oled});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Rect":
-        pygame.draw.rect(screen, WHITE, (x0, y0, w, h), 1)
-        if not preview:
-            add_command(f"u8g2.drawFrame({x0_oled}, {y0_oled}, {w_oled}, {h_oled});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Rect llena":
-        pygame.draw.rect(screen, WHITE, (x0, y0, w, h))
-        if not preview:
-            add_command(f"u8g2.drawBox({x0_oled}, {y0_oled}, {w_oled}, {h_oled});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Círculo":
-        bbox = pygame.Rect(x0, y0, w, h)
-        pygame.draw.ellipse(screen, WHITE, bbox, 1)
-        if not preview:
-            rx = w_oled // 2
-            ry = h_oled // 2
-            cx_oled = x0_oled + rx
-            cy_oled = y0_oled + ry
-            add_command(f"u8g2.drawCircle({cx_oled}, {cy_oled}, {min(rx, ry)});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Círculo lleno":
-        bbox = pygame.Rect(x0, y0, w, h)
-        pygame.draw.ellipse(screen, WHITE, bbox)
-        if not preview:
-            rx = w_oled // 2
-            ry = h_oled // 2
-            cx_oled = x0_oled + rx
-            cy_oled = y0_oled + ry
-            add_command(f"u8g2.drawDisc({cx_oled}, {cy_oled}, {min(rx, ry)});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Elipse":
-        pygame.draw.ellipse(screen, WHITE, (x0, y0, w, h), 1)
-        if not preview:
-            add_command(f"u8g2.drawEllipse({x0_oled}, {y0_oled}, {w_oled // 2}, {h_oled // 2});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Elipse llena":
-        pygame.draw.ellipse(screen, WHITE, (x0, y0, w, h))
-        if not preview:
-            add_command(f"u8g2.drawFilledEllipse({x0_oled}, {y0_oled}, {w_oled // 2}, {h_oled // 2});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Triángulo":
-        mid_x = (sx + ex) // 2
-        top_y = min(sy, ey)
-        base_y = max(sy, ey)
-        points = [(sx, base_y), (ex, base_y), (mid_x, top_y)]
-        pygame.draw.polygon(screen, WHITE, points, 1)
-        if not preview:
-            mid_x_oled = (mid_x - TOOLBAR_WIDTH) // SCALE
-            top_y_oled = top_y // SCALE
-            base_y_oled = base_y // SCALE
-            add_command(f"u8g2.drawTriangle({sx_oled}, {base_y_oled}, {ex_oled}, {base_y_oled}, {mid_x_oled}, {top_y_oled});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Triángulo lleno":
-        mid_x = (sx + ex) // 2
-        top_y = min(sy, ey)
-        base_y = max(sy, ey)
-        points = [(sx, base_y), (ex, base_y), (mid_x, top_y)]
-        pygame.draw.polygon(screen, WHITE, points)
-        if not preview:
-            mid_x_oled = (mid_x - TOOLBAR_WIDTH) // SCALE
-            top_y_oled = top_y // SCALE
-            base_y_oled = base_y // SCALE
-            add_command(f"u8g2.drawFilledTriangle({sx_oled}, {base_y_oled}, {ex_oled}, {base_y_oled}, {mid_x_oled}, {top_y_oled});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Caja red":
-        radius = min(w_oled, h_oled) // 4
-        pygame.draw.rect(screen, WHITE, (x0, y0, w, h), 1, border_radius=10)
-        if not preview:
-            add_command(f"u8g2.drawRBox({x0_oled}, {y0_oled}, {w_oled}, {h_oled}, {radius});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Marco red":
-        radius = min(w_oled, h_oled) // 4
-        pygame.draw.rect(screen, WHITE, (x0, y0, w, h), 1, border_radius=10)
-        if not preview:
-            add_command(f"u8g2.drawRFrame({x0_oled}, {y0_oled}, {w_oled}, {h_oled}, {radius});")
-            if save:
-                drawn_shapes.append((tool, start, end))
-
-    elif tool == "Borrar":
-        pygame.draw.rect(screen, BLACK, (TOOLBAR_WIDTH, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT))
-        u8g2_commands.clear()
-        drawn_shapes.clear()
-
-    elif tool == "Guardar":
-        with open("u8g2_output.txt", "w") as f:
-            for cmd in u8g2_commands:
-                f.write(cmd + "\n")
-        print("Guardado en u8g2_output.txt")
+# Estados para mover figura y vértices
+selected_shape = None
+shape_offset = (0, 0)
+modo_editar = False
+figura_idx = None
+punto_idx = None
 
 # Bucle principal
 running = True
 while running:
     screen.fill(BLACK)
-    draw_toolbar()
+    draw_toolbar(screen, font, selected_tool)
 
+    # Redibujar figuras existentes
     for shape in drawn_shapes:
-        draw_shape(*shape, preview=False, save=False)
+        if len(shape) == 2:
+            tool, datos = shape
+            if isinstance(datos, list):
+                draw_shape(screen, tool, datos, datos, preview=False, save=False, drawn_shapes=[])
+            else:
+                draw_shape(screen, tool, *datos, preview=False, save=False, drawn_shapes=[])
+        elif len(shape) == 3:
+            tool, start, end = shape
+            draw_shape(screen, tool, start, end, preview=False, save=False, drawn_shapes=[])
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -199,25 +57,87 @@ while running:
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
-            if x < TOOLBAR_WIDTH:
-                index = (y - 10) // 25
-                if 0 <= index < len(tools):
-                    selected_tool = tools[index]
-                    if selected_tool == "Guardar":
-                        draw_shape("Guardar", (0, 0), (0, 0))
+            herramienta = detectar_herramienta(x, y)
+
+            if herramienta:
+                selected_tool = herramienta
+                if selected_tool == "Guardar":
+                    guardar_comandos(drawn_shapes)
+                elif selected_tool == "Cargar":
+                    from cargar_dibujo import interpretar_comandos
+                    contenido = cargar_comandos()
+                    if contenido:
+                        clear_commands()
+                        drawn_shapes.clear()
+                        interpretar_comandos(contenido, drawn_shapes)
+                elif selected_tool == "Borrar":
+                    clear_commands()
+                    drawn_shapes.clear()
             else:
-                drawing = True
-                start_pos = event.pos
+                if not dentro_area_oled(x, y):
+                    continue
+
+                if selected_tool == "Seleccionar":
+                    selected_shape, shape_offset = seleccionar_figura(drawn_shapes, event.pos)
+                elif selected_tool == "Editar vértice":
+                    figura_idx, punto_idx = detectar_vertice_cercano(drawn_shapes, event.pos)
+                    if figura_idx is not None:
+                        modo_editar = True
+                else:
+                    drawing = True
+                    start_pos = event.pos
+
+        elif event.type == pygame.MOUSEMOTION:
+            if selected_tool == "Seleccionar" and selected_shape is not None:
+                mover_figura(drawn_shapes, selected_shape, event.pos, shape_offset)
+            elif modo_editar and figura_idx is not None and punto_idx is not None:
+                mover_vertice(drawn_shapes, figura_idx, punto_idx, event.pos)
 
         elif event.type == pygame.MOUSEBUTTONUP:
-            if drawing:
+            if selected_tool == "Seleccionar":
+                selected_shape = None
+            elif modo_editar:
+                modo_editar = False
+                figura_idx = None
+                punto_idx = None
+            elif drawing:
                 end_pos = pygame.mouse.get_pos()
-                draw_shape(selected_tool, start_pos, end_pos, preview=False, save=True)
+
+                # Aseguramos que tanto inicio como fin estén en el área OLED
+                if dentro_area_oled(*start_pos) and dentro_area_oled(*end_pos):
+                    undo_stack.append((list(drawn_shapes), list(get_commands())))
+                    redo_stack.clear()
+                    draw_shape(screen, selected_tool, start_pos, end_pos, preview=False, save=True, drawn_shapes=drawn_shapes)
                 drawing = False
 
-    if drawing:
+        elif event.type == pygame.KEYDOWN:
+            mods = pygame.key.get_mods()
+            if event.key == pygame.K_z and mods & pygame.KMOD_CTRL:
+                if undo_stack:
+                    redo_stack.append((list(drawn_shapes), list(get_commands())))
+                    prev_shapes, prev_cmds = undo_stack.pop()
+                    drawn_shapes.clear()
+                    drawn_shapes.extend(prev_shapes)
+                    clear_commands()
+                    from comandos import u8g2_commands
+                    u8g2_commands.clear()
+                    u8g2_commands.extend(prev_cmds)
+            elif event.key == pygame.K_y and mods & pygame.KMOD_CTRL:
+                if redo_stack:
+                    undo_stack.append((list(drawn_shapes), list(get_commands())))
+                    next_shapes, next_cmds = redo_stack.pop()
+                    drawn_shapes.clear()
+                    drawn_shapes.extend(next_shapes)
+                    clear_commands()
+                    from comandos import u8g2_commands
+                    u8g2_commands.clear()
+                    u8g2_commands.extend(next_cmds)
+
+    # Vista previa mientras se dibuja
+    if drawing and selected_tool not in ["Guardar", "Cargar", "Borrar", "Seleccionar", "Editar vértice"]:
         end_pos = pygame.mouse.get_pos()
-        draw_shape(selected_tool, start_pos, end_pos, preview=True, save=False)
+        if dentro_area_oled(*end_pos):
+            draw_shape(screen, selected_tool, start_pos, end_pos, preview=True, save=False, drawn_shapes=[])
 
     pygame.display.flip()
 

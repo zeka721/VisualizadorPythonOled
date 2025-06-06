@@ -1,0 +1,9 @@
+SimuladorArduino/
+├── Visualizador.py
+├── dibujo.py
+├── comandos.py
+├── archivo.py
+├── configuracion.py
+├── herramientas.py
+├── cargar_dibujo.py    ← este archivo DEBE estar aquí
+└── recursos/            ← (puede estar vacío por ahora)
